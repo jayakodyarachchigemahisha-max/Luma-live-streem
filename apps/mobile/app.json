@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "LumaLive",
+    "slug": "lumalive",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "lumalive",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "LumaLive uses your camera when you go live."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "LumaLive uses your microphone for live rooms and background audio."
+        }
+      ],
+      "expo-notifications"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.lumalive",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "remote-notification"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.example.lumalive",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "POST_NOTIFICATIONS",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum UserRole {
+  VIEWER
+  CREATOR
+  ADMIN
+}
+enum RoomStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+enum LedgerType {
+  TOPUP
+  GIFT_SENT
+  GIFT_RECEIVED
+  REFERRAL_REWARD
+  SUBSCRIPTION_COMMISSION
+  PAYOUT
+}
+model User {
+  id String @id @default(uuid())
+  firebaseUid String @unique
+  displayName String
+  username String @unique
+  role UserRole @default(VIEWER)
+  avatarUrl String?
+  bio String?
+  locale String @default("en")
+  coins Int @default(0)
+  walletVersion Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  creatorProfile CreatorProfile?
+  followers Follow[] @relation("followed")
+  following Follow[] @relation("following")
+  ledger LedgerEntry[]
+  rooms LiveRoom[] @relation("creator")
+  subscriptionsAsSubscriber Subscription[] @relation("subscriber")
+  subscriptionsAsCreator Subscription[] @relation("creator")
+  referralsMade Referral[] @relation("referrer")
+  referralsReceived Referral[] @relation("referee")
+  watchHistory WatchHistory[]
+}
+model CreatorProfile {
+  id String @id @default(uuid())
+  userId String @unique
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  category String @default("General")
+  tags String[]
+  commissionBps Int @default(7000)
+  totalViews Int @default(0)
+  peakViewers Int @default(0)
+  watchMinutes Int @default(0)
+  giftIncome Int @default(0)
+  subscriptionIncome Int @default(0)
+  followerGrowth Int @default(0)
+}
+model Follow {
+  followerId String
+  followedId String
+  createdAt DateTime @default(now())
+  follower User @relation("following", fields:[followerId], references:[id], onDelete:Cascade)
+  followed User @relation("followed", fields:[followedId], references:[id], onDelete:Cascade)
+  @@id([followerId, followedId])
+  @@index([followedId, createdAt])
+}
+model LiveRoom {
+  id String @id @default(uuid())
+  creatorId String
+  creator User @relation("creator", fields:[creatorId], references:[id])
+  title String
+  category String
+  tags String[]
+  status RoomStatus @default(SCHEDULED)
+  providerRoomName String @unique
+  viewerCount Int @default(0)
+  peakViewers Int @default(0)
+  startedAt DateTime?
+  endedAt DateTime?
+  replayUrl String?
+  createdAt DateTime @default(now())
+  watchHistory WatchHistory[]
+  @@index([status, createdAt])
+  @@index([creatorId, status])
+}
+model Gift {
+  id String @id @default(uuid())
+  name String
+  coinCost Int
+  isActive Boolean @default(true)
+}
+model LedgerEntry {
+  id String @id @default(uuid())
+  userId String
+  type LedgerType
+  amount Int
+  idempotencyKey String @unique
+  referenceId String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId], references:[id])
+  @@index([userId, createdAt])
+}
+model Subscription {
+  id String @id @default(uuid())
+  subscriberId String
+  creatorId String
+  periodStart DateTime
+  periodEnd DateTime
+  priceCents Int
+  status String @default("active")
+  idempotencyKey String @unique
+  subscriber User @relation("subscriber", fields:[subscriberId], references:[id])
+  creator User @relation("creator", fields:[creatorId], references:[id])
+  @@unique([subscriberId, creatorId, periodStart])
+  @@index([creatorId, periodEnd])
+}
+model Referral {
+  id String @id @default(uuid())
+  code String @unique
+  referrerId String
+  refereeId String @unique
+  rewardCoins Int @default(0)
+  claimedAt DateTime?
+  referrer User @relation("referrer", fields:[referrerId], references:[id])
+  referee User @relation("referee", fields:[refereeId], references:[id])
+}
+model WatchHistory {
+  id String @id @default(uuid())
+  userId String
+  roomId String
+  watchedAt DateTime @default(now())
+  seconds Int @default(0)
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  room LiveRoom @relation(fields:[roomId], references:[id], onDelete:Cascade)
+  @@unique([userId, roomId])
+  @@index([userId, watchedAt])
+}

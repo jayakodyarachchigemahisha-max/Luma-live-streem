@@ -1,0 +1,12 @@
+node_modules
+.expo
+.env
+.env.*
+!.env.example
+dist
+coverage
+android/.gradle
+ios/Pods
+*.jks
+*.p8
+*.mobileprovision
